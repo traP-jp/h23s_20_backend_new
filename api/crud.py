@@ -26,5 +26,12 @@ def get_ranking(db: Session, limit: int = 10):
 def current_user(db: Session, traq_id: str):
     return db.query(models.User).filter(models.User.traq_id == traq_id).first()
 
-def update_user(db: Session):
-    pass
+def update_user(db: Session, user_update: schemas.User):
+    user = db.query(models.User).filter(models.User.traq_id == user_update.traq_id).first()
+    # for文とかでまとめられたらいいのに
+    if user_update.github_id:
+        user.github_id = user_update.github_id
+    if user_update.atcoder_id:
+        user.atcoder_id = user_update.atcoder_id
+    db.commit()
+    return user

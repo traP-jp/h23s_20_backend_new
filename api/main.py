@@ -30,9 +30,9 @@ async def ranking(db: Session = Depends(get_db)):
     return crud.get_ranking(db)
 
 @app.get("/me", response_model=schemas.User)
-async def current_user(db: Session = Depends(get_db), traq_id: str = traq_id):
+async def current_user(db: Session = Depends(get_db)):
     return crud.current_user(db, traq_id)
 
-# @app.put("/me")
-# async def update_user(user = schemas.User, db: Session = Depends(get_db)):
-#     pass
+@app.put("/me")
+async def update_user(user: schemas.User, db: Session = Depends(get_db)):
+    return user
