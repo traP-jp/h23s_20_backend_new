@@ -42,3 +42,8 @@ async def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
 async def check_github(db: Session = Depends(get_db)):
     flag, point_type = crud.get_progress_github(db, traq_id)
     return flag
+
+@app.get("/triggers/atcoder")
+async def check_atcoder(db: Session = Depends(get_db)):
+    flag, point_type = crud.get_progress_atcoder(db, traq_id)
+    return flag

@@ -91,4 +91,22 @@ def get_progress_github(db: Session, traq_id: str):
         return (True, point_type)
     else:
         return (False, "")
+
+def get_progress_atcoder(db: Session, traq_id: str):
+    user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
+    point_type = user.atcoder_point_type
     
+    ac_count = 0
+    res = requests.get(f'https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user={user.atcoder_id}&from_second=1687018869')
+    d = json.loads(res.content)
+    for e in d:
+        print(e)
+        if e["result"] == "AC":
+            ac_count += 1
+    
+    if user.atcoder_total_ac < ac_count:
+        user.atcoder_total_ac = ac_count
+        db.commit()
+        return (True, point_type)
+    else:
+        return (False, "")
