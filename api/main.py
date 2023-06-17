@@ -36,7 +36,7 @@ async def current_user(db: Session = Depends(get_db)):
 
 @app.put("/me", response_model=schemas.User)
 async def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
-    return user
+    return crud.update_user(db, user)
 
 @app.get("/triggers/github")
 async def check_github(db: Session = Depends(get_db)):

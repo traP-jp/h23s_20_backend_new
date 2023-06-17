@@ -53,23 +53,19 @@ def current_user(db: Session, traq_id: str):
 
 def update_user(db: Session, user_update: schemas.UserUpdate):
     user = db.query(models.User).filter(models.User.traq_id == user_update.traq_id).first()
-    # for文とかでまとめられたらいいのに
+    
     if user_update.github_id:
         user.github_id = user_update.github_id
-        db.flush()
     if user_update.atcoder_id:
         user.atcoder_id = user_update.atcoder_id
-        db.flush()
     if user_update.traq_point_type:
         user.traq_point_type = user_update.traq_point_type
-        db.flush()
     if user_update.github_point_type:
         user.github_point_type = user_update.github_point_type
-        db.flush()
     if user_update.atcoder_point_type:
         user.atcoder_point_type = user_update.atcoder_point_type
-        db.flush()
     db.commit()
+
     db.refresh(user)
     return user
 
