@@ -11,6 +11,12 @@ class User(Base):
     traq_point_type = Column(String(255))
     github_point_type = Column(String(255))
     atcoder_point_type = Column(String(255))
+    github_total_contributions = Column(Integer)
+    traq_total_posts = Column(Integer)
+    atcoder_total_ac = Column(Integer)
+    
+    class Config:
+        orm_mode = True
 
 
 class Tree(Base):
@@ -19,12 +25,18 @@ class Tree(Base):
     traq_id = Column(String(255), ForeignKey("users.traq_id"))
     branch_count = Column(Integer)
 
+    class Config:
+        orm_mode = True
+
 
 class Leaf(Base):
     __tablename__ = "leaves"
-    tree_id = Column(Integer, ForeignKey("trees.id"), primary_key=True)
+    tree_id = Column(Integer, ForeignKey("trees.tree_id"), primary_key=True)
     leaf_id = Column(Integer, primary_key=True)
     position_x = Column(Integer)
     position_y = Column(Integer)
     color = Column(String(255))
     size = Column(String(255))
+
+    class Config:
+        orm_mode = True

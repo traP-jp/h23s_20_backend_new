@@ -19,8 +19,12 @@ def add_point(db: Session, point: schemas.Point, traq_id: str):
     db.commit()
 
 # total_point 降順に User を取得. (GET \ranking)
-def get_ranking(db: Session, offset: int = 0, limit: int = 100):
-    return db.query(models.User).order_by(desc(models.User.total_point)).offset(offset).limit(limit).all()
+def get_ranking(db: Session, limit: int = 10):
+    res = db.query(models.User).order_by(desc(models.User.total_point)).limit(limit).all()
+    return res
+
+def current_user(db: Session, traq_id: str):
+    return db.query(models.User).filter(models.User.traq_id == traq_id).first()
 
 def update_user(db: Session):
     pass
