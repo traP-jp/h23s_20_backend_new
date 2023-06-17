@@ -1,6 +1,31 @@
 from api import schemas, models
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import desc
+from api.config import GITHUB_API_KEY
+import requests
+import json
+
+github_query = """
+query($userName:String!) {
+  user(login: $userName){
+    contributionsCollection {
+      contributionCalendar {
+        totalContributions
+        weeks {
+          contributionDays {
+            contributionCount
+            date
+          }
+        }
+      }
+    }
+  }
+}
+"""
+github_headers = {
+    "Authorization": f"Bearer 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",
+}
 
 # ポイントを受け取って更新 (POST \points)
 def add_point(db: Session, point: schemas.Point, traq_id: str):
@@ -26,9 +51,9 @@ def get_ranking(db: Session, limit: int = 10):
 def current_user(db: Session, traq_id: str):
     return db.query(models.User).filter(models.User.traq_id == traq_id).first()
 
-def update_user(db: Session, user_update: schemas.User):
+def update_user(db: Session, user_update: schemas.UserUpdate):
     user = db.query(models.User).filter(models.User.traq_id == user_update.traq_id).first()
-    # for文とかでまとめられたらいいのに
+    
     if user_update.github_id:
         user.github_id = user_update.github_id
     if user_update.atcoder_id:
@@ -40,4 +65,44 @@ def update_user(db: Session, user_update: schemas.User):
     if user_update.atcoder_point_type:
         user.atcoder_point_type = user_update.atcoder_point_type
     db.commit()
+
+    db.refresh(user)
     return user
+
+def get_progress_github(db: Session, traq_id: str):
+    user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
+    point_type = user.github_point_type
+
+    variables = {"userName": "SakanoYuito"}
+    res = requests.post(
+        "https://api.github.com/graphql",
+        json={"query": github_query, "variables": variables},
+        headers=github_headers
+    )
+
+    contribution_total = json.loads(res.content)["data"]["user"]["contributionsCollection"]["contributionCalendar"]["totalContributions"]
+    if user.github_total_contributions < contribution_total:
+        user.github_total_contributions = contribution_total
+        db.commit()
+        return (True, point_type)
+    else:
+        return (False, "")
+
+def get_progress_atcoder(db: Session, traq_id: str):
+    user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
+    point_type = user.atcoder_point_type
+    
+    ac_count = 0
+    res = requests.get(f'https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user={user.atcoder_id}&from_second=1687018869')
+    d = json.loads(res.content)
+    for e in d:
+        print(e)
+        if e["result"] == "AC":
+            ac_count += 1
+    
+    if user.atcoder_total_ac < ac_count:
+        user.atcoder_total_ac = ac_count
+        db.commit()
+        return (True, point_type)
+    else:
+        return (False, "")
