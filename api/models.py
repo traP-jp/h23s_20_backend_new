@@ -5,16 +5,16 @@ from api.database import Base
 class User(Base):
     __tablename__ = "users"
     traq_id = Column(String(255), primary_key=True)
-    total_point = Column(Integer)
+    total_point = Column(Integer, default=0)
     github_id = Column(String(255))
     atcoder_id = Column(String(255))
     traq_point_type = Column(String(255))
     github_point_type = Column(String(255))
     atcoder_point_type = Column(String(255))
-    github_total_contributions = Column(Integer)
-    traq_total_posts = Column(Integer)
-    atcoder_total_ac = Column(Integer)
-    
+    github_total_contributions = Column(Integer, default=0)
+    traq_total_posts = Column(Integer, default=0)
+    atcoder_total_ac = Column(Integer, default=0)
+
     class Config:
         orm_mode = True
 

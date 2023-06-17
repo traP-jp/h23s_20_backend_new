@@ -1,8 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+
 
 class Point(BaseModel):
     point_type: str
+
 
 class User(BaseModel):
     traq_id: str
@@ -19,13 +21,39 @@ class User(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserUpdate(BaseModel):
-    traq_id: str
     github_id: Optional[str]
     atcoder_id: Optional[str]
     traq_point_type: Optional[str]
     github_point_type: Optional[str]
     atcoder_point_type: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+
+class Leaf(BaseModel):
+    position_x: int
+    position_y: int
+    color: str
+    size: str
+
+    class Config:
+        orm_mode = True
+
+
+class Tree(BaseModel):
+    branch_count: int
+    leaves: List[Leaf]
+
+    class Config:
+        orm_mode = True
+
+
+class Trees(BaseModel):
+    total_point: int
+    trees: List[Tree]
 
     class Config:
         orm_mode = True

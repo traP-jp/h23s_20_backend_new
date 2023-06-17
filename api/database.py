@@ -5,7 +5,8 @@ SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:password@app_db:3306/app"
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 
 import time
-time.sleep(1)
+
+time.sleep(3)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

@@ -6,37 +6,36 @@ from api.database import SessionLocal, engine
 from typing import Annotated, List, Optional
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from authlib.integrations.requests_client import OAuth2Session
 from fastapi.responses import RedirectResponse, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from os import getenv
 
 # Configurations
-CLIENT_ID = "mh2QFGcvbMkHGNZD50ydorIaaMyABDh1c6Rn"
-CLIENT_SECRET = ""
-REDIRECT_URI = "http://localhost:8000/callback"
-AUTHORIZE_URL = "https://q.trap.jp/api/v3/oauth2/authorize"
-TOKEN_URL = "https://q.trap.jp/api/v3/oauth2/token"
+CLIENT_ID = getenv("CLIENT_ID")
+CLIENT_SECRET = getenv("CLIENT_SECRET")
+REDIRECT_URI = getenv("REDIRECT_URI")
+AUTHORIZATION_URL = getenv("AUTHORIZATION_URL")
+TOKEN_URL = getenv("TOKEN_URL")
+USER_API_URL = getenv("USER_API_URL")
 
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
-
-traq_id = "shirasu_oisi"
-
-traq_id = "1"
 
 client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, scope="read write")
 
 
 class TraqOAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        print("pass")
-
         # Skip middleware processing for certain paths
         if str(request.url.path) in [
             "/",
+            "/ping",
+            "/docs",
+            "/openapi.json",
             "/callback",
             "/auth",
-            "/me2",
         ]:
             response = await call_next(request)
             return response
@@ -44,17 +43,13 @@ class TraqOAuthMiddleware(BaseHTTPMiddleware):
         # Retrieve token from cookie
         token = request.session.get("token")
 
-        print(token)
-
         if not token:
             return Response(status_code=401)
 
         client = OAuth2Session(CLIENT_ID, token=token)
-        resp = client.get("https://q.trap.jp/api/v3/users/me")
+        resp = client.get(USER_API_URL)
         resp.raise_for_status()
         traq_id = resp.json().get("name")
-
-        print(traq_id)
 
         # Store traq_id in request.state
         request.state.traq_id = traq_id
@@ -70,10 +65,20 @@ app.add_middleware(
     SessionMiddleware, secret_key="secret-key", session_cookie="sessionid"
 )
 
+origins = []
 
-@app.get("/hello")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/ping")
 async def route():
-    return "Hello"
+    return {"message": "pong"}
 
 
 @app.get("/test")
@@ -84,21 +89,14 @@ async def test_traq_id(request: Request):
 
 @app.get("/auth")
 async def auth(request: Request):
-    uri, _ = client.create_authorization_url(AUTHORIZE_URL)
+    uri, _ = client.create_authorization_url(AUTHORIZATION_URL)
     return RedirectResponse(url=uri)
 
 
 @app.get("/callback")
 async def auth(request: Request, responce: Response):
     code = request.query_params.get("code")
-
     token = client.fetch_token(TOKEN_URL, "grant_type=authorization_code", code=code)
-
-    print(token)
-
-    access_token = token.get("access_token")
-
-    print(access_token)
 
     # session に token を保存
     request.session["token"] = token
@@ -114,8 +112,19 @@ def get_db():
         db.close()
 
 
+@app.get("/users", response_model=List[str])
+async def users(db: Session = Depends(get_db)):
+    return crud.get_all_users(db)
+
+
+@app.get("/{user_id}/trees", response_model=schemas.Trees)
+async def trees(user_id: str, db: Session = Depends(get_db)):
+    pass
+
+
 @app.post("/points")
-async def points(point: schemas.Point, db: Session = Depends(get_db)):
+async def points(request: Request, point: schemas.Point, db: Session = Depends(get_db)):
+    traq_id = request.state.traq_id
     crud.add_point(db, point, traq_id=traq_id)
 
 
@@ -125,19 +134,31 @@ async def ranking(db: Session = Depends(get_db)):
 
 
 @app.get("/me", response_model=schemas.User)
-async def current_user(db: Session = Depends(get_db)):
-    return crud.current_user(db, traq_id)
+async def get_user(request: Request, db: Session = Depends(get_db)):
+    traq_id = request.state.traq_id
+    return crud.get_user(db, traq_id)
+
 
 @app.put("/me", response_model=schemas.User)
-async def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
-    return crud.update_user(db, user)
+async def update_user(
+    request: Request, user: schemas.UserUpdate, db: Session = Depends(get_db)
+):
+    traq_id = request.state.traq_id
+    return crud.update_user(db, traq_id, user)
 
+
+# /{user_id}/trees が呼ばれた時に発火するように修正
+"""
 @app.get("/triggers/github")
-async def check_github(db: Session = Depends(get_db)):
+async def check_github(request: Request, db: Session = Depends(get_db)):
+    traq_id = request.state.traq_id
     flag, point_type = crud.get_progress_github(db, traq_id)
     return flag
 
+
 @app.get("/triggers/atcoder")
-async def check_atcoder(db: Session = Depends(get_db)):
+async def check_atcoder(request: Request, db: Session = Depends(get_db)):
+    traq_id = request.state.traq_id
     flag, point_type = crud.get_progress_atcoder(db, traq_id)
     return flag
+"""
