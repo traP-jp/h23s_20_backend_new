@@ -33,5 +33,11 @@ def update_user(db: Session, user_update: schemas.User):
         user.github_id = user_update.github_id
     if user_update.atcoder_id:
         user.atcoder_id = user_update.atcoder_id
+    if user_update.traq_point_type:
+        user.traq_point_type = user_update.traq_point_type
+    if user_update.github_point_type:
+        user.github_point_type = user_update.github_point_type
+    if user_update.atcoder_point_type:
+        user.atcoder_point_type = user_update.atcoder_point_type
     db.commit()
     return user
