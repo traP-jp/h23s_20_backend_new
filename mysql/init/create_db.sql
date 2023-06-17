@@ -4,12 +4,15 @@ USE app;
 
 CREATE TABLE IF NOT EXISTS `users` (
     `traq_id` varchar(255) NOT NULL,
-    `total_point` int(11) DEFAULT NULL,
+    `total_point` int(11) DEFAULT 0,
     `github_id` varchar(255) DEFAULT NULL,
     `atcoder_id` varchar(255) DEFAULT NULL,
     `traq_point_type` varchar(255) DEFAULT NULL,
     `github_point_type` varchar(255) DEFAULT NULL,
     `atcoder_point_type` varchar(255) DEFAULT NULL,
+    `github_total_contributions` int(11) DEFAULT 0,
+    `traq_total_posts` int(11) DEFAULT 0,
+    `atcoder_total_ac` int(11) DEFAULT 0,
     PRIMARY KEY (`traq_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

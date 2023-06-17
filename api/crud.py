@@ -19,8 +19,25 @@ def add_point(db: Session, point: schemas.Point, traq_id: str):
     db.commit()
 
 # total_point 降順に User を取得. (GET \ranking)
-def get_ranking(db: Session, offset: int = 0, limit: int = 100):
-    return db.query(models.User).order_by(desc(models.User.total_point)).offset(offset).limit(limit).all()
+def get_ranking(db: Session, limit: int = 10):
+    res = db.query(models.User).order_by(desc(models.User.total_point)).limit(limit).all()
+    return res
 
-def update_user(db: Session):
-    pass
+def current_user(db: Session, traq_id: str):
+    return db.query(models.User).filter(models.User.traq_id == traq_id).first()
+
+def update_user(db: Session, user_update: schemas.User):
+    user = db.query(models.User).filter(models.User.traq_id == user_update.traq_id).first()
+    # for文とかでまとめられたらいいのに
+    if user_update.github_id:
+        user.github_id = user_update.github_id
+    if user_update.atcoder_id:
+        user.atcoder_id = user_update.atcoder_id
+    if user_update.traq_point_type:
+        user.traq_point_type = user_update.traq_point_type
+    if user_update.github_point_type:
+        user.github_point_type = user_update.github_point_type
+    if user_update.atcoder_point_type:
+        user.atcoder_point_type = user_update.atcoder_point_type
+    db.commit()
+    return user

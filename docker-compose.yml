@@ -32,9 +32,3 @@ services:
     restart: always
     expose: 
       - "3306"
-    healthcheck:
-      test: ["CMD", "mysql", "-uroot", "-ppassword", "-e", "use app"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s # sleep の分だけ遅延させる

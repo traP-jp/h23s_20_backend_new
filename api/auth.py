@@ -38,7 +38,7 @@ app_oauth = oauth.create_client("traq")
 async def callback(request: Request):
     token = await app_oauth.authorize_access_token(request)
 
-    return 
+    return token
 
 
 @app.get("/login", response_model=None)
@@ -46,11 +46,11 @@ async def login(request: Request) -> Union[Any, RedirectResponse]:
     # redirect_uri = request.url_for("callback")
     return await app_oauth.authorize_redirect(request, "http://localhost:8000/callback")
 
-# @app.get("/me")
-# async def me(request: Request):
-#     s = requests.Session()
-#     s.headers.
-#     print(response)
+@app.get("/me")
+async def me(request: Request):
+    s = requests.Session()
+    s.headers.update({"Authorization": f"Bearer {token}"})
+    s.get("https://q.trap.jp/api/v3/users/me")
     
 
 
