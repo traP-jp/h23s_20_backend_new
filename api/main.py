@@ -1,67 +1,37 @@
-""" 動きません（traQ OAuth）
-import json
-from typing import Any, Union
-from fastapi import FastAPI
-from starlette.config import Config
-from starlette.requests import Request
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import HTMLResponse, RedirectResponse
-from authlib.integrations.starlette_client import OAuth, OAuthError
-from pydantic import BaseModel
-import requests
+from fastapi import Depends, FastAPI, HTTPException, status
+from api import crud, models, schemas
+from api.database import SessionLocal, engine
+from typing import Annotated, List, Optional
+from sqlalchemy.orm import Session
 
-app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="19711f9f78d73ae2c7114f031bd13663eb5391e1aee816768411")
-
-oauth = OAuth()
-oauth.register(
-    name="traq",
-    client_id="bmLpJkCgkcPuQKedUIRpWFee7EE7zXSsIHpp",
-    client_secret="HVoKtKIqp7tmnQ1YiTr0uK0PvzgnUKZsZHFn",
-    access_token_url="https://q.trap.jp/api/v3/oauth2/token",
-    access_token_params={
-        "grant_type": "authorization_code"
-    },
-    authorize_url="https://q.trap.jp/api/v3/oauth2/authorize",
-    authorize_params=None,
-    api_base_url="https://q.trap.jp/api/v3",
-    # client_kwargs={"timeout": Timeout(10.0)},
-)
-
-app_oauth = oauth.create_client("traq")
-
-@app.get("/callback")
-async def callback(request: Request):
-    token = await app_oauth.authorize_access_token(request)
-
-    obj = requests.Session()
-    res = obj.request(
-        'get',
-        "https://q.trap.jp/api/v3/me",
-        cookies={
-            "session": token
-        }
-    )
-
-    return res
-
-@app.get("/login", response_model=None)
-async def login(request: Request) -> Union[Any, RedirectResponse]:
-    # redirect_uri = request.url_for("callback")
-    return await app_oauth.authorize_redirect(request, "http://localhost:8000/callback")
-
-
-if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run(app)
-"""
-
-
-from fastapi import FastAPI
-
+models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    except:
+        db.close()
 
-@app.get("/hello")
-async def hello():
-    return {"message": "hello world!"}
+@app.get("/")
+async def route():
+    return "Hello"
+
+
+@app.post("/points")
+async def points(point: schemas.Point, db: Session = Depends(get_db)):
+    crud.add_point(db, point.point_type, ) # traq_id
+
+@app.get("/ranking", response_model=List[schemas.User])
+async def ranking(db: Session = Depends(get_db)):
+    ranks = crud.get_ranking(db)
+    return ranks
+
+@app.get("/me", response_model=schemas.User)
+async def current_user(db: Session = Depends(get_db)):
+    pass
+
+@app.put("/me")
+async def update_user(user = schemas.User, db: Session = Depends(get_db)):
+    pass

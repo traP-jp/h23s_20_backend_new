@@ -7,21 +7,34 @@ services:
     tty: true
     restart: unless-stopped
     environment:
-      MARIADB_USERNAME: user
+      MARIADB_USER: user
       MARIADB_PASSWORD: password
       MARIADB_DATABASE: app
     depends_on:
       - db
 
   db:
+    container_name: app_db
     image: mariadb:latest
     environment:
       MARIADB_ROOT_PASSWORD: password
+      MARIADB_PASSWORD: password
       MARIADB_USER: user
       MARIADB_DATABASE: app
     volumes:
       - ./db/data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
     ports:
-      - 3306:3306
+      - target: 3306 # ゲスト は 3306 にマッピングする
+        published: 13306 # ホスト to ゲスト は 13306 から入る
+        protocol: tcp
+        mode: host
     restart: always
+    expose: 
+      - "3306"
+    healthcheck:
+      test: ["CMD", "mysql", "-uroot", "-ppassword", "-e", "use app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # sleep の分だけ遅延させる
