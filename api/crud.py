@@ -1,6 +1,10 @@
 from api import schemas, models
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import desc
+from api.config import GITHUB_API_KEY, github_query, github_headers, github_url
+import requests
+import json
 
 # ポイントを受け取って更新 (POST \points)
 def add_point(db: Session, point: schemas.Point, traq_id: str):
@@ -26,7 +30,7 @@ def get_ranking(db: Session, limit: int = 10):
 def current_user(db: Session, traq_id: str):
     return db.query(models.User).filter(models.User.traq_id == traq_id).first()
 
-def update_user(db: Session, user_update: schemas.User):
+def update_user(db: Session, user_update: schemas.UserUpdate):
     user = db.query(models.User).filter(models.User.traq_id == user_update.traq_id).first()
     # for文とかでまとめられたらいいのに
     if user_update.github_id:
@@ -39,5 +43,29 @@ def update_user(db: Session, user_update: schemas.User):
         user.github_point_type = user_update.github_point_type
     if user_update.atcoder_point_type:
         user.atcoder_point_type = user_update.atcoder_point_type
+    db.flush()
     db.commit()
+    db.refresh(user)
+    db.exe
     return user
+
+def get_progress_github(db: Session, traq_id: str):
+    user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
+    point_type = user.github_point_type
+
+    res = requests.post(
+        github_url,
+        json={
+            "query": github_query,
+            "variables": {"userName": user.github_id},
+        },
+        headers=github_headers
+    )
+
+    contribution_total = json.loads(res.content["data"]["user"]["contributionsCollection"]["contributionCalendar"]["totalContributions"])
+    if user.github_total_contributions < contribution_total:
+        user.github_total_contributions = contribution_total
+        return (True, point_type)
+    else:
+        return (False, "")
+    

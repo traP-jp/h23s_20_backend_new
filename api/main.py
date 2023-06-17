@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import RedirectResponse
 from api import crud, models, schemas
 from api.database import SessionLocal, engine
 from typing import Annotated, List, Optional
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
-traq_id = "1"
+traq_id = "shirasu_oisi"
 
 def get_db():
     db = SessionLocal()
@@ -33,6 +34,14 @@ async def ranking(db: Session = Depends(get_db)):
 async def current_user(db: Session = Depends(get_db)):
     return crud.current_user(db, traq_id)
 
-@app.put("/me")
-async def update_user(user: schemas.User, db: Session = Depends(get_db)):
+@app.put("/me", response_model=schemas.User)
+async def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
     return user
+
+@app.get("/triggers/github")
+async def check_github(db: Session = Depends(get_db)):
+    flag, point_type = crud.get_progress_github(db, traq_id)
+    if flag:
+        return RedirectResponse(f"/points?point={point_type}", status_code=status.HTTP_302_FOUND)
+    else:
+        pass # エラー周り

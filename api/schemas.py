@@ -18,3 +18,14 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserUpdate(BaseModel):
+    traq_id: str
+    github_id: Optional[str]
+    atcoder_id: Optional[str]
+    traq_point_type: Optional[str]
+    github_point_type: Optional[str]
+    atcoder_point_type: Optional[str]
+
+    class Config:
+        orm_mode = True
