@@ -41,7 +41,4 @@ async def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
 @app.get("/triggers/github")
 async def check_github(db: Session = Depends(get_db)):
     flag, point_type = crud.get_progress_github(db, traq_id)
-    if flag:
-        return RedirectResponse(f"/points?point={point_type}", status_code=status.HTTP_302_FOUND)
-    else:
-        pass # エラー周り
+    return flag

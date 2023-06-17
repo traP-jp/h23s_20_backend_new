@@ -4,8 +4,9 @@ GITHUB_API_KEY = getenv("GITHUB_API_KEY")
 
 
 github_headers = {
-    "Authorization": "Bearer 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",
+    "Authorization": f"Bearer {GITHUB_API_KEY}",
 }
+
 
 github_query = """
 query($userName:String!) {
@@ -25,4 +26,4 @@ query($userName:String!) {
 }
 """
 
-github_url = "https://api.github.com/graphql",
+github_url = "https://api.github.com/graphql"
