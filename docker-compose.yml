@@ -1,9 +1,26 @@
-version: '3'
+version: "3"
 services:
-  demo-app:
+  app:
     build: .
-    volumes:
-      - .dockervenv:/src/.venv
-      - .:/src
     ports:
-      - 8000:8000  # ホストマシンのポート8000を、docker内のポート8000に接続する
+      - 8000:8000
+    tty: true
+    restart: unless-stopped
+    environment:
+      MARIADB_USERNAME: user
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: app
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_USER: user
+      MARIADB_DATABASE: app
+    volumes:
+      - ./db/data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    restart: always
