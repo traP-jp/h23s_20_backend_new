@@ -1,0 +1,3 @@
+/.venv
+/.dockervenv
+/api/__pycache__
