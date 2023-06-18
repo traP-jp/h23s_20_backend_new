@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import RedirectResponse
-from fastapi import Depends, FastAPI, HTTPException, status, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, status, Request, Response, UploadFile, File
 from api import crud, models, schemas
 from api.database import SessionLocal, engine
 from typing import Annotated, List, Optional
@@ -11,6 +11,10 @@ from authlib.integrations.requests_client import OAuth2Session
 from fastapi.responses import RedirectResponse, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from os import getenv
+
+import json
+import base64
+
 
 # Configurations
 CLIENT_ID = getenv("CLIENT_ID")
@@ -69,7 +73,7 @@ origins = []
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -148,12 +152,22 @@ async def update_user(
     return crud.update_user(db, traq_id, user)
 
 
-@app.get("/temp")
-async def temp(request: Request, db: Session = Depends(get_db)):
+# @app.get("/temp")
+# async def temp(request: Request, db: Session = Depends(get_db)):
+#     traq_id = request.state.traq_id
+#     token = request.session.get("token")
+#     res = crud.get_progress_traq(db, token["access_token"], traq_id)
+#     return res
+
+
+@app.post("./image")
+async def image(request: Request, db: Session = Depends(get_db), file: bytes = File(...)):
     traq_id = request.state.traq_id
-    token = request.session.get("token")
-    res = crud.get_progress_traq(db, token["access_token"], traq_id)
-    return res
+    img_binary = base64.b64decode(file)
+    img_png = np.frombuffer(img_binary, dtype=np.uint8)
+    img = cv2.imdecode(img_png, cv2.IMREAD_COLOR)
+    image_file = f"api/images/{traq_id}.png"
+    cv2.imwrite(image_file, img)
 
 # /{user_id}/trees が呼ばれた時に発火するように修正
 
