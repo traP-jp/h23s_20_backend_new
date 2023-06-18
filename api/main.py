@@ -180,20 +180,3 @@ async def image(request: Request, db: Session = Depends(get_db), file: bytes = F
     img = cv2.imdecode(img_png, cv2.IMREAD_COLOR)
     image_file = f"api/images/{traq_id}.png"
     cv2.imwrite(image_file, img)
-
-# /{user_id}/trees が呼ばれた時に発火するように修正
-
-"""
-@app.get("/triggers/github")
-async def check_github(request: Request, db: Session = Depends(get_db)):
-    traq_id = request.state.traq_id
-    flag, point_type = crud.get_progress_github(db, traq_id)
-    return flag
-
-
-@app.get("/triggers/atcoder")
-async def check_atcoder(request: Request, db: Session = Depends(get_db)):
-    traq_id = request.state.traq_id
-    flag, point_type = crud.get_progress_atcoder(db, traq_id)
-    return flag
-"""
