@@ -2,7 +2,7 @@ from api import schemas, models
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import desc
-from api.config import GITHUB_API_KEY
+from api.config import GITHUB_API_KEY, github_query, github_headers
 import requests
 import json
 
@@ -148,6 +148,7 @@ def update_user(db: Session, traq_id: str, user_update: schemas.UserUpdate):
     return user
 
 
+
 def get_progress_github(db: Session, traq_id: str):
     user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
     point_type = user.github_point_type
@@ -165,9 +166,9 @@ def get_progress_github(db: Session, traq_id: str):
     if user.github_total_contributions < contribution_total:
         user.github_total_contributions = contribution_total
         db.commit()
-        return (True, point_type)
+        return True
     else:
-        return (False, "")
+        return False
 
 
 def get_progress_atcoder(db: Session, traq_id: str):
@@ -180,13 +181,43 @@ def get_progress_atcoder(db: Session, traq_id: str):
     )
     d = json.loads(res.content)
     for e in d:
-        print(e)
+        # print(e)
         if e["result"] == "AC":
             ac_count += 1
 
     if user.atcoder_total_ac < ac_count:
         user.atcoder_total_ac = ac_count
         db.commit()
-        return (True, point_type)
+        return True
     else:
-        return (False, "")
+        return False
+
+
+traq_channels = [
+    "b70ef91c-8fda-4124-a7e5-4648e18da6c5", # random/progress
+    "9e822ec2-634e-4b9c-af30-41707f537426", # t/Algorithm/
+    "7dc7d0e1-a7b9-4294-ba3e-1149a4c42c71", # t/CTF/
+    "cde0fe1b-f225-415a-b302-0c7a7ab754e2", # t/Game
+    "858ae414-21ec-40d8-be6a-012620db8edf", # t/graphics/
+    "8d878ff5-f34f-43ab-8a0f-6a6f8f3202a3", # t/g/progressNSFW
+    "8bd9e07a-2c6a-49e6-9961-4f88e83b4918", # t/sound/
+    "112446e4-a8b5-4618-9813-75f08377ccc5"  # t/SysAd/
+]
+
+def get_progress_traq(db: Session, token: str, traq_id: str):
+    header = {"Authorization": f"Bearer {token}"}
+    user = db.query(models.User).filter(models.User.traq_id == traq_id).first()
+    point_type = user.traq_point_type
+
+    traq_uuid = json.loads(requests.get('https://q.trap.jp/api/v3/users/me', headers=header).content)["id"]
+    posts = 0
+    for channel in traq_channels:
+        posts += json.loads(requests.get(f'https://q.trap.jp/api/v3/messages?after=2023-04-16T15%3A04%3A05Z&in={channel}&from={traq_uuid}&sort=-createdAt', headers=header).content)["totalHits"]
+        print(posts)
+    
+    if user.traq_total_posts < posts:
+        user.traq_total_posts = posts
+        db.commit()
+        return True
+    else:
+        return False

@@ -120,6 +120,7 @@ async def users(db: Session = Depends(get_db)):
 @app.get("/{user_id}/trees", response_model=schemas.Trees)
 async def trees(user_id: str, db: Session = Depends(get_db)):
     pass
+    # triggers をはさむ
 
 
 @app.post("/points")
@@ -147,7 +148,15 @@ async def update_user(
     return crud.update_user(db, traq_id, user)
 
 
+@app.get("/temp")
+async def temp(request: Request, db: Session = Depends(get_db)):
+    traq_id = request.state.traq_id
+    token = request.session.get("token")
+    res = crud.get_progress_traq(db, token["access_token"], traq_id)
+    return res
+
 # /{user_id}/trees が呼ばれた時に発火するように修正
+
 """
 @app.get("/triggers/github")
 async def check_github(request: Request, db: Session = Depends(get_db)):

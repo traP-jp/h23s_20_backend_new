@@ -4,3 +4,4 @@
 /db/*
 .DS_Dtore
 .env
+/temp/*
