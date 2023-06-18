@@ -40,6 +40,7 @@ class TraqOAuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/callback",
             "/auth",
+            "/image"
         ]:
             response = await call_next(request)
             return response
@@ -122,7 +123,7 @@ async def users(db: Session = Depends(get_db)):
 
 
 @app.get("/{user_id}/trees", response_model=schemas.Trees)
-async def trees(request: Request, db: Session = Depends(get_db), user_id):
+async def trees(request: Request, db: Session = Depends(get_db)):
     # ここに木のまわりの処理
     
     # 進捗確認
@@ -172,11 +173,15 @@ async def update_user(
 #     return res
 
 
-@app.post("./image")
-async def image(request: Request, db: Session = Depends(get_db), file: bytes = File(...)):
+@app.post("/image")
+async def image(request: Request, file: bytes = File(...)):
     traq_id = request.state.traq_id
-    img_binary = base64.b64decode(file)
-    img_png = np.frombuffer(img_binary, dtype=np.uint8)
-    img = cv2.imdecode(img_png, cv2.IMREAD_COLOR)
-    image_file = f"api/images/{traq_id}.png"
-    cv2.imwrite(image_file, img)
+    # traq_id = "shirasu_oisi" # temp
+    # img_binary = base64.b64decode(file)
+    # print(file)
+    # img_png = np.frombuffer(img_binary, dtype=np.uint8)
+    # img = cv2.imdecode(img_png, cv2.IMREAD_COLOR)
+    # image_file = f"api/images/{traq_id}.png"
+    # cv2.imwrite(image_file, img)
+    with open(f"./images/{traq_id}", "wb") as f:
+        f.write(file)
