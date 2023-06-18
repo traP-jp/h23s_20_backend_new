@@ -174,9 +174,9 @@ async def update_user(
 
 
 @app.post("/image")
-async def image(request: Request, file: bytes = File(...)):
-    traq_id = request.state.traq_id
-    # traq_id = "shirasu_oisi" # temp
+async def image(request: Request, treePng: bytes = File(...)):
+    # traq_id = request.state.traq_id
+    traq_id = "shirasu_oisi" # temp
     # img_binary = base64.b64decode(file)
     # print(file)
     # img_png = np.frombuffer(img_binary, dtype=np.uint8)
@@ -184,4 +184,4 @@ async def image(request: Request, file: bytes = File(...)):
     # image_file = f"api/images/{traq_id}.png"
     # cv2.imwrite(image_file, img)
     with open(f"./images/{traq_id}", "wb") as f:
-        f.write(file)
+        f.write(treePng)
