@@ -81,7 +81,7 @@ def insert_tree(db: Session, tree: schemas.Tree, traq_id: str):
 
 
 # ポイントを受け取って更新 (POST \points)
-def add_point(db: Session, point: schemas.Point, traq_id: str) -> int:
+def add_point(db: Session, point: str, traq_id: str) -> int:
     t = point.point_type
     if t == "low":
         point = 1
@@ -163,12 +163,15 @@ def get_progress_github(db: Session, traq_id: str):
     contribution_total = json.loads(res.content)["data"]["user"][
         "contributionsCollection"
     ]["contributionCalendar"]["totalContributions"]
+
+    diff = 0
     if user.github_total_contributions < contribution_total:
+        diff = contribution_total - user.github_total_contributions
         user.github_total_contributions = contribution_total
         db.commit()
-        return True
+        return diff
     else:
-        return False
+        return diff
 
 
 def get_progress_atcoder(db: Session, traq_id: str):
@@ -185,12 +188,14 @@ def get_progress_atcoder(db: Session, traq_id: str):
         if e["result"] == "AC":
             ac_count += 1
 
+    diff = 0
     if user.atcoder_total_ac < ac_count:
+        diff = ac_count - user.atcoder_total_ac
         user.atcoder_total_ac = ac_count
         db.commit()
-        return True
+        return diff
     else:
-        return False
+        return diff
 
 
 traq_channels = [
@@ -215,9 +220,9 @@ def get_progress_traq(db: Session, token: str, traq_id: str):
         posts += json.loads(requests.get(f'https://q.trap.jp/api/v3/messages?after=2023-04-16T15%3A04%3A05Z&in={channel}&from={traq_uuid}&sort=-createdAt', headers=header).content)["totalHits"]
         print(posts)
     
+    diff = 0
     if user.traq_total_posts < posts:
+        diff = posts - user.traq_total_posts
         user.traq_total_posts = posts
         db.commit()
-        return True
-    else:
-        return False
+    return diff

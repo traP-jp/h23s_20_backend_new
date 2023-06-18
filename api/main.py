@@ -122,15 +122,27 @@ async def users(db: Session = Depends(get_db)):
 
 
 @app.get("/{user_id}/trees", response_model=schemas.Trees)
-async def trees(user_id: str, db: Session = Depends(get_db)):
-    pass
-    # triggers をはさむ
+async def trees(request: Request, db: Session = Depends(get_db), user_id):
+    # ここに木のまわりの処理
+    
+    # 進捗確認
+    traq_id = request.state.traq_id
+    user = db.query(schemas.User).filter(schemas.User.traq_id == traq_id).first()
+    diff_github = crud.get_progress_github(db, traq_id)
+    if diff_github:
+        crud.add_point(db, user.github_point_type, traq_id)
+    diff_traq = crud.get_progress_traq(db, traq_id)
+    if diff_traq:
+        crud.add_point(db, user.traq_point_type, traq_id)
+    diff_atcoder = crud.get_progress_atcoder(db, traq_id)
+    if diff_atcoder:
+        crud.add_point(db, user.atcoder_point_type, traq_id)
 
 
 @app.post("/points")
 async def points(request: Request, point: schemas.Point, db: Session = Depends(get_db)):
     traq_id = request.state.traq_id
-    crud.add_point(db, point, traq_id=traq_id)
+    crud.add_point(db, point.point_type, traq_id=traq_id)
 
 
 @app.get("/ranking", response_model=List[schemas.User])
